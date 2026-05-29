@@ -5,9 +5,8 @@ export const defaultData = {
   tagline: 'Guest Guide',
   phone: '+1 234 567 8901',
   email: 'host@example.com',
-  city: 'City',
-  country: 'Country',
-  address: '123 Example St',
+  locationLabel: '', // Text shown on the hero location row (e.g. "Cavite, Philippines")
+  propertyMapsUrl: '', // Google Maps link for the property — hero location opens navigation
 
   // Fonts (Google Fonts family names)
   fontDisplay: 'Cormorant Garamond',
@@ -178,12 +177,12 @@ export const defaultData = {
 
   // Nearby
   nearby: [
-    { id: 'n1', type: 'Beach & Nature', emoji: '🌲', name: 'Lakeside Park', distance: '5 min away', description: 'A scenic park with walking trails and picnic spots — perfect for a quiet morning.', image: null },
-    { id: 'n2', type: 'Dining', emoji: '🍽️', name: 'The Local Kitchen', distance: '8 min away', description: 'Family-run restaurant serving authentic local cuisine. Try the daily specials.', image: null },
-    { id: 'n3', type: 'Essentials', emoji: '🛒', name: 'SuperMart Grocery', distance: '5 min away', description: 'Full-service grocery store. Open daily 7 AM – 10 PM.', image: null },
-    { id: 'n4', type: 'Landmark', emoji: '🏛️', name: 'Historic Town Square', distance: '15 min away', description: 'Charming downtown area with cafés, shops, and weekend markets.', image: null },
-    { id: 'n5', type: 'Medical', emoji: '🏥', name: 'City General Hospital', distance: '10 min away', description: 'Full-service emergency hospital with 24/7 care.', image: null },
-    { id: 'n6', type: 'Transport', emoji: '🚕', name: 'Bus Stop & Taxis', distance: 'Just outside', description: 'Public transit and ride-share options easily available.', image: null }
+    { id: 'n1', type: 'Beach & Nature', emoji: '🌲', name: 'Lakeside Park', distance: '5 min away', description: 'A scenic park with walking trails and picnic spots — perfect for a quiet morning.', image: null, mapsUrl: '', showMap: true },
+    { id: 'n2', type: 'Dining', emoji: '🍽️', name: 'The Local Kitchen', distance: '8 min away', description: 'Family-run restaurant serving authentic local cuisine. Try the daily specials.', image: null, mapsUrl: '', showMap: true },
+    { id: 'n3', type: 'Essentials', emoji: '🛒', name: 'SuperMart Grocery', distance: '5 min away', description: 'Full-service grocery store. Open daily 7 AM – 10 PM.', image: null, mapsUrl: '', showMap: true },
+    { id: 'n4', type: 'Landmark', emoji: '🏛️', name: 'Historic Town Square', distance: '15 min away', description: 'Charming downtown area with cafés, shops, and weekend markets.', image: null, mapsUrl: '', showMap: true },
+    { id: 'n5', type: 'Medical', emoji: '🏥', name: 'City General Hospital', distance: '10 min away', description: 'Full-service emergency hospital with 24/7 care.', image: null, mapsUrl: '', showMap: true },
+    { id: 'n6', type: 'Transport', emoji: '🚕', name: 'Bus Stop & Taxis', distance: 'Just outside', description: 'Public transit and ride-share options easily available.', image: null, mapsUrl: '', showMap: true }
   ],
 
   // Emergency

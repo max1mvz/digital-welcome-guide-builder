@@ -72,19 +72,22 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
       <h2 className="font-display text-xl text-brown-dark mb-5">Step through the sections below</h2>
 
       {/* === PROPERTY DETAILS === */}
-      <SectionAccordion title="Property Details" number="1" defaultOpen={true}>
+      <SectionAccordion title="Property Details" number="1" defaultOpen={true} {...previewProps(null)}>
         <TextField label="Property Name" value={data.propertyName} onChange={v => update('propertyName', v)} placeholder="Your Property" />
         <TextField label="Tagline" value={data.tagline} onChange={v => update('tagline', v)} placeholder="Guest Guide" />
         <p className="text-[11px] text-brown-light -mt-1 mb-2 italic">Phone, email & location below appear on the hero page and Contact modal.</p>
         <TextField label="Phone Number" value={data.phone} onChange={v => update('phone', v)} placeholder="+1 234 567 8901" />
         <TextField label="Email Address" value={data.email} onChange={v => update('email', v)} type="email" placeholder="host@example.com" />
-        <TextField label="Address" value={data.address} onChange={v => update('address', v)} placeholder="123 Example St" />
-        <TextField label="City" value={data.city} onChange={v => update('city', v)} placeholder="City" />
-        <TextField label="Country" value={data.country} onChange={v => update('country', v)} placeholder="Country" />
+        <TextField label="Location Label (shown on hero)" value={data.locationLabel} onChange={v => update('locationLabel', v)} placeholder="Cavite, Philippines" />
+        <TextField label="Google Maps Location Link" value={data.propertyMapsUrl} onChange={v => update('propertyMapsUrl', v)} type="url" placeholder="Paste your property's Google Maps link" />
+        <p className="text-[10px] text-brown-light -mt-1 mb-1 leading-relaxed">
+          Tapping the location on the hero card opens <strong>Google Maps directions</strong> to your place.
+          On Maps: find your property → <strong>Share</strong> → <strong>Copy link</strong>. Leave blank to use the address above.
+        </p>
       </SectionAccordion>
 
       {/* === BRANDING === */}
-      <SectionAccordion title="Branding & Colors" number="2">
+      <SectionAccordion title="Branding & Colors" number="2" {...previewProps(null)}>
         <p className="text-xs text-brown-mid mb-3">Quick presets:</p>
         <div className="flex flex-wrap gap-2 mb-4">
           {COLOR_PRESETS.map(preset => (
@@ -187,7 +190,7 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
       </SectionAccordion>
 
       {/* === IMAGES === */}
-      <SectionAccordion title="Images" number="3">
+      <SectionAccordion title="Images" number="3" {...previewProps(null)}>
         <p className="text-xs text-brown-mid mb-3">Upload photos for the hero, logo, and each section. Recommended size: 1200×800px.</p>
         <ImageUpload label="Logo (PNG, transparent)" file={data.images.logo} onChange={f => updateImage('logo', f)} hint="Shown in hero card. Recommended: 400×200px PNG." />
         <ImageUpload label="Hero Background" file={data.images.hero} onChange={f => updateImage('hero', f)} hint="Full-screen background photo on landing." />
@@ -349,11 +352,35 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
               next[i] = { ...next[i], description: v };
               update('nearby', next);
             }} rows={3} />
+            <TextField label="Google Maps Link" value={place.mapsUrl} onChange={v => {
+              const next = [...data.nearby];
+              next[i] = { ...next[i], mapsUrl: v };
+              update('nearby', next);
+            }} type="url" placeholder="Paste a Google Maps link (or leave blank)" />
+            <p className="text-[10px] text-brown-light -mt-2 mb-2 leading-relaxed">
+              On Google Maps: find the place → <strong>Share</strong> → <strong>Copy link</strong> → paste here.
+              Leave blank to auto-locate by name + city.
+            </p>
+
+            <label className="flex items-center gap-2 mb-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={place.showMap !== false}
+                onChange={e => {
+                  const next = [...data.nearby];
+                  next[i] = { ...next[i], showMap: e.target.checked };
+                  update('nearby', next);
+                }}
+                className="w-4 h-4 accent-brown-deep"
+              />
+              <span className="text-xs text-brown-dark">Auto-show map (when no photo uploaded)</span>
+            </label>
+
             <ImageUpload label="Photo of this place" file={place.image} onChange={f => {
               const next = [...data.nearby];
               next[i] = { ...next[i], image: f };
               update('nearby', next);
-            }} hint="Recommended: 600×400px landscape." />
+            }} hint="Optional. If uploaded, this photo replaces the auto map." />
           </div>
         ))}
         <button
@@ -361,7 +388,7 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
             const newId = 'n' + Math.random().toString(36).slice(2, 6);
             update('nearby', [
               ...(data.nearby || []),
-              { id: newId, type: '', emoji: '', name: '', distance: '', description: '', image: null }
+              { id: newId, type: '', emoji: '', name: '', distance: '', description: '', image: null, mapsUrl: '', showMap: true }
             ]);
           }}
           className="mt-2 px-4 py-2 bg-brown-deep text-white text-xs uppercase tracking-wider rounded hover:bg-brown-dark transition-colors"
@@ -510,7 +537,7 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
       </SectionAccordion>
 
       {/* === CUSTOM SECTIONS === */}
-      <SectionAccordion title="Custom Sections (Add More)" number="16">
+      <SectionAccordion title="Custom Sections (Add More)" number="16" {...previewProps(null)}>
         <p className="text-xs text-brown-mid mb-3">
           Add your own custom cards to the guide. Each card can open its own content modal, or link out to an external website in a new tab.
         </p>

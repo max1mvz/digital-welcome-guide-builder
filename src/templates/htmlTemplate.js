@@ -70,6 +70,66 @@ const ICON_BACK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 // Determines image path with fallback
 const img = (file, fallback) => file ? `images/${file}` : fallback;
 
+// Builds a Google Maps URL for a nearby place.
+// Uses an explicit pasted link if present, otherwise builds a search query
+// from the place name + property city/country.
+function buildMapsUrl(place, d) {
+  if (place.mapsUrl && place.mapsUrl.trim()) return place.mapsUrl.trim();
+  const parts = [place.name, d.locationLabel].filter(Boolean).join(' ');
+  if (!parts) return '';
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts)}`;
+}
+
+const ICON_MAP_PIN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+
+// Builds a Google Maps DIRECTIONS url for the property (opens navigation on tap).
+// Uses a pasted link's coordinates/query if available; opaque share links are used as-is;
+// otherwise builds a destination from address + city + country.
+function buildPropertyNavUrl(d) {
+  const link = (d.propertyMapsUrl || '').trim();
+  let dest = '';
+  if (link) {
+    const at = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (at) {
+      dest = `${at[1]},${at[2]}`;
+    } else {
+      const q = link.match(/[?&]q=([^&]+)/);
+      const search = link.match(/maps\/search\/([^/?@]+)/);
+      if (q) dest = decodeURIComponent(q[1].replace(/\+/g, ' '));
+      else if (search) dest = decodeURIComponent(search[1].replace(/\+/g, ' '));
+      else return link; // opaque share link (e.g. maps.app.goo.gl) — open directly
+    }
+  }
+  if (!dest) dest = d.locationLabel || '';
+  if (!dest) return '';
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
+}
+
+// Builds a keyless Google Maps EMBED url (interactive map iframe, no API key).
+// Prefers coordinates/query parsed from a pasted link; otherwise uses name + city/country.
+function buildMapEmbed(place, d) {
+  let query = '';
+  const link = (place.mapsUrl || '').trim();
+  if (link) {
+    // Try to pull "@lat,lng" coordinates from a pasted Maps URL
+    const at = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (at) {
+      query = `${at[1]},${at[2]}`;
+    } else {
+      // Try a ?q= or /search/<query> fragment
+      const q = link.match(/[?&]q=([^&]+)/);
+      const search = link.match(/maps\/search\/([^/?@]+)/);
+      if (q) query = decodeURIComponent(q[1].replace(/\+/g, ' '));
+      else if (search) query = decodeURIComponent(search[1].replace(/\+/g, ' '));
+    }
+  }
+  if (!query) {
+    query = [place.name, d.locationLabel].filter(Boolean).join(' ');
+  }
+  if (!query) return '';
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed`;
+}
+
 const modalCover = (id, imageFile, title, subtitle) => `
       <div class="modal-cover" ${imageFile ? `style="background-image: url('images/${imageFile}')"` : ''}>
         <div class="cover-overlay"></div>
@@ -126,10 +186,21 @@ export function generateHTML(d, imageNames = {}) {
           <span class="hero-info-icon">${ICON_EMAIL}</span>
           <span>${esc(d.email || '')}</span>
         </div>
-        <div class="hero-info-row">
+        ${(() => {
+          const navUrl = buildPropertyNavUrl(d);
+          const locText = esc(d.locationLabel || '') || 'View location';
+          if (navUrl) {
+            return `<a class="hero-info-row hero-info-row--link" href="${esc(navUrl)}" target="_blank" rel="noopener noreferrer">
           <span class="hero-info-icon">${ICON_LOCATION}</span>
-          <span>${esc(d.city || '')}${d.country ? ', ' + esc(d.country) : ''}</span>
-        </div>
+          <span>${locText}</span>
+          <span class="hero-info-go" aria-hidden="true">↗</span>
+        </a>`;
+          }
+          return `<div class="hero-info-row">
+          <span class="hero-info-icon">${ICON_LOCATION}</span>
+          <span>${locText}</span>
+        </div>`;
+        })()}
       </div>
 
       <div class="hero-cta-wrap">
@@ -406,12 +477,25 @@ ${(d.rules || []).map((r, i) => `          <div class="rule-card"><p class="rule
 ${(d.nearby || []).map((n, i) => {
   const imgFile = (imageNames.nearbyImages && imageNames.nearbyImages[n.id]) || null;
   const reverse = i % 2 === 1 ? ' nearby-row--reverse' : '';
+  const mapsUrl = buildMapsUrl(n, d);
+  const embedUrl = buildMapEmbed(n, d);
+  const useMap = !imgFile && n.showMap !== false && embedUrl;
+  // Visual priority: manual photo > auto map > placeholder
+  let photoBlock;
+  if (imgFile) {
+    photoBlock = `<div class="nearby-photo" style="background-image: url('images/${imgFile}')"></div>`;
+  } else if (useMap) {
+    photoBlock = `<div class="nearby-photo nearby-photo--map"><iframe src="${esc(embedUrl)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map of ${esc(n.name || 'location')}" allowfullscreen></iframe></div>`;
+  } else {
+    photoBlock = `<div class="nearby-photo nearby-photo--empty"><span>📷</span></div>`;
+  }
   return `          <div class="nearby-row${reverse}">
-            ${imgFile ? `<div class="nearby-photo" style="background-image: url('images/${imgFile}')"></div>` : `<div class="nearby-photo nearby-photo--empty"><span>📷</span></div>`}
+            ${photoBlock}
             <div class="nearby-text">
               <h3 class="nearby-title">${n.emoji ? `<span class="nearby-emoji">${esc(n.emoji)}</span>` : ''}${esc(n.name || '')}${n.distance ? ` — <span class="nearby-distance">${esc(n.distance)}</span>` : ''}</h3>
               ${n.type ? `<p class="nearby-cat">${esc(n.type)}</p>` : ''}
               <p class="nearby-desc">${esc(n.description || '')}</p>
+              ${mapsUrl ? `<a class="nearby-map-link" href="${esc(mapsUrl)}" target="_blank" rel="noopener noreferrer">${ICON_MAP_PIN}<span>View on Map</span></a>` : ''}
             </div>
           </div>`;
 }).join('\n')}
