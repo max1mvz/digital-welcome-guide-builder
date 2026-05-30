@@ -120,6 +120,26 @@ strong { font-weight: 500; }
   display: flex; flex-direction: column; align-items: center; text-align: center;
 }
 .hero-logo { width: auto; max-width: 220px; max-height: 140px; object-fit: contain; margin-bottom: 1.75rem; }
+.hero-name {
+  font-family: var(--font-display);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.75rem;
+}
+.hero-tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: rgba(255,255,255,0.72);
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  margin-bottom: 1.75rem;
+}
+/* Tighten the gap between the logo/name and the tagline when both are present */
+.hero-logo:has(+ .hero-tagline),
+.hero-name:has(+ .hero-tagline) { margin-bottom: 0.5rem; }
 .hero-info-list { width: 100%; display: flex; flex-direction: column; gap: 0.625rem; margin-bottom: 2rem; }
 .hero-info-row {
   display: flex; align-items: center; gap: 0.875rem;

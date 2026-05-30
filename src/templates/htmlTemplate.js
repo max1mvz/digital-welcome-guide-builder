@@ -175,7 +175,8 @@ export function generateHTML(d, imageNames = {}) {
     <div class="hero-overlay"></div>
     <div class="hero-card">
 
-      ${imageNames.logo ? `<img class="hero-logo" src="images/${imageNames.logo}" alt="${propTitle}">` : `<h1 style="font-family:var(--font-display); color:#fff; font-size:2rem; letter-spacing:0.1em; margin-bottom:1.75rem;">${propTitle}</h1>`}
+      ${imageNames.logo ? `<img class="hero-logo" src="images/${imageNames.logo}" alt="${propTitle}">` : `<h1 class="hero-name">${propTitle}</h1>`}
+      ${d.tagline ? `<p class="hero-tagline">${esc(d.tagline)}</p>` : ''}
 
       <div class="hero-info-list">
         <div class="hero-info-row">
