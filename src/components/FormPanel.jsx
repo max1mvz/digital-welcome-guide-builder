@@ -1,6 +1,9 @@
 import React from 'react';
 import SectionAccordion from './SectionAccordion.jsx';
+import CollapsibleGroup from './CollapsibleGroup.jsx';
 import ImageUpload from './ImageUpload.jsx';
+import GalleryUploader from './GalleryUploader.jsx';
+import VideoUpload from './VideoUpload.jsx';
 import IconPicker from './IconPicker.jsx';
 import FontPicker, { DISPLAY_FONTS, BODY_FONTS } from './FontPicker.jsx';
 import { TextField, TextArea, StringListEditor, ColorField } from './FormField.jsx';
@@ -220,6 +223,14 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
         <ImageUpload label="Contact Cover" file={data.images.coverContact} {...imgPreview('coverContact', 'modal-contact')} />
       </SectionAccordion>
 
+      {/* === GUIDE SECTIONS GROUP (4–15) === */}
+      <CollapsibleGroup
+        title="Guide Sections"
+        subtitle="Welcome, Accommodations, WiFi, Rules, Nearby & more"
+        count={12}
+        defaultOpen={false}
+      >
+
       {/* === WELCOME MESSAGE === */}
       <SectionAccordion title="Welcome Message" number="4" {...previewProps('modal-welcome')} {...enabledProps('welcome')}>
         <TextArea label="Note Paragraph 1" value={data.welcomeNote1} onChange={v => update('welcomeNote1', v)} rows={3} />
@@ -252,12 +263,21 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
 
       {/* === AMENITIES === */}
       <SectionAccordion title="Amenities" number="7" {...previewProps('modal-amenities')} {...enabledProps('amenities')}>
-        <StringListEditor label="Sleeping" items={data.amenitySleeping} onChange={v => update('amenitySleeping', v)} />
-        <StringListEditor label="Bathroom" items={data.amenityBathroom} onChange={v => update('amenityBathroom', v)} />
-        <StringListEditor label="Living Room" items={data.amenityLiving} onChange={v => update('amenityLiving', v)} />
-        <StringListEditor label="Workspace" items={data.amenityWorkspace} onChange={v => update('amenityWorkspace', v)} />
-        <StringListEditor label="Kitchen" items={data.amenityKitchen} onChange={v => update('amenityKitchen', v)} />
-        <StringListEditor label="Outdoor" items={data.amenityOutdoor} onChange={v => update('amenityOutdoor', v)} />
+        <p className="text-xs text-brown-mid mb-3">Rename any category, add a photo, and edit the items. Clear the name and items to hide a category.</p>
+        {[
+          ['amenitySleepingLabel', 'amenitySleeping', 'amenitySleepingImg'],
+          ['amenityBathroomLabel', 'amenityBathroom', 'amenityBathroomImg'],
+          ['amenityLivingLabel', 'amenityLiving', 'amenityLivingImg'],
+          ['amenityWorkspaceLabel', 'amenityWorkspace', 'amenityWorkspaceImg'],
+          ['amenityKitchenLabel', 'amenityKitchen', 'amenityKitchenImg'],
+          ['amenityOutdoorLabel', 'amenityOutdoor', 'amenityOutdoorImg']
+        ].map(([labelKey, itemsKey, imgKey]) => (
+          <div key={imgKey} className="mb-4 p-3 border border-border rounded bg-cream-light/50">
+            <TextField label="Category Name" value={data[labelKey]} onChange={v => update(labelKey, v)} placeholder="e.g. Sleeping" />
+            <ImageUpload label="Photo (optional)" file={data.images[imgKey]} {...imgPreview(imgKey, 'modal-amenities')} hint="Recommended: 600×400px landscape." />
+            <StringListEditor label="Items" items={data[itemsKey]} onChange={v => update(itemsKey, v)} />
+          </div>
+        ))}
       </SectionAccordion>
 
       {/* === WIFI === */}
@@ -545,6 +565,8 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
         </div>
       </SectionAccordion>
 
+      </CollapsibleGroup>
+
       {/* === CUSTOM SECTIONS === */}
       <SectionAccordion title="Custom Sections (Add More)" number="16" {...previewProps(null)}>
         <p className="text-xs text-brown-mid mb-3">
@@ -557,8 +579,14 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
             update('customSections', next);
           };
           const linkType = cs.linkType || 'modal';
+          // Which preview view this section maps to (its own modal, or home for external links)
+          const target = linkType === 'external' ? null : `modal-custom-${cs.id}`;
           return (
-          <div key={cs.id} className="mb-4 p-3 border border-border rounded bg-cream-light/50">
+          <div
+            key={cs.id}
+            className="mb-4 p-3 border border-border rounded bg-cream-light/50"
+            onFocusCapture={() => setActiveModalId(target)}
+          >
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs uppercase tracking-wider text-brown-mid">Section {i + 1}</span>
               <button
@@ -574,30 +602,26 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
             {/* Card behavior toggle */}
             <label className="block text-xs uppercase tracking-wider text-brown-mid mb-1.5 mt-2">When card is tapped</label>
             <div className="grid grid-cols-2 gap-2 mb-3">
-              <button
-                type="button"
-                onClick={() => setField('linkType', 'modal')}
-                className={`px-2 py-2 text-xs border rounded transition-colors ${
-                  linkType === 'modal'
-                    ? 'border-brown-deep bg-brown-deep text-white'
-                    : 'border-border bg-white text-brown-dark hover:border-brown-mid'
-                }`}
-              >
-                <div className="font-medium">Open Content</div>
-                <div className="text-[10px] opacity-70 mt-0.5">Show a modal</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setField('linkType', 'external')}
-                className={`px-2 py-2 text-xs border rounded transition-colors ${
-                  linkType === 'external'
-                    ? 'border-brown-deep bg-brown-deep text-white'
-                    : 'border-border bg-white text-brown-dark hover:border-brown-mid'
-                }`}
-              >
-                <div className="font-medium">Open Link</div>
-                <div className="text-[10px] opacity-70 mt-0.5">New browser tab</div>
-              </button>
+              {[
+                ['modal', 'Content', 'Text modal'],
+                ['gallery', 'Gallery', 'Photo grid'],
+                ['video', 'Video', 'Floating player'],
+                ['external', 'Link', 'New tab']
+              ].map(([type, title, desc]) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => { setField('linkType', type); setActiveModalId(type === 'external' || type === 'video' ? null : `modal-custom-${cs.id}`); }}
+                  className={`px-2 py-2 text-xs border rounded transition-colors ${
+                    linkType === type
+                      ? 'border-brown-deep bg-brown-deep text-white'
+                      : 'border-border bg-white text-brown-dark hover:border-brown-mid'
+                  }`}
+                >
+                  <div className="font-medium">{title}</div>
+                  <div className="text-[10px] opacity-70 mt-0.5">{desc}</div>
+                </button>
+              ))}
             </div>
 
             {linkType === 'external' ? (
@@ -608,12 +632,23 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
                 type="url"
                 placeholder="https://casa-nosa-booking.vercel.app/"
               />
+            ) : linkType === 'gallery' ? (
+              <>
+                <TextField label="Modal Subtitle" value={cs.subtitle} onChange={v => setField('subtitle', v)} placeholder="A look around" />
+                <GalleryUploader images={cs.galleryImages} onActivate={() => setActiveModalId(target)} onChange={imgs => { setField('galleryImages', imgs); setActiveModalId(target); }} />
+                <ImageUpload label="Cover Image (optional)" file={cs.coverImage} onActivate={() => setActiveModalId(target)} onChange={f => { setField('coverImage', f); setActiveModalId(target); }} hint="Shown at the top of the section's modal." />
+              </>
+            ) : linkType === 'video' ? (
+              <>
+                <p className="text-[10px] text-brown-light mb-2">The card plays this video in a floating player with a transparent background.</p>
+                <VideoUpload file={cs.video} onChange={f => setField('video', f)} />
+              </>
             ) : (
               <>
                 <TextField label="Modal Subtitle" value={cs.subtitle} onChange={v => setField('subtitle', v)} placeholder="Everything you need to know" />
                 <TextField label="Content Label (e.g. 'Details')" value={cs.label} onChange={v => setField('label', v)} placeholder="Details" />
                 <TextArea label="Content (separate paragraphs with blank lines)" value={cs.content} onChange={v => setField('content', v)} rows={5} placeholder="Write the content for this section. Use blank lines to separate paragraphs." />
-                <ImageUpload label="Cover Image (optional)" file={cs.coverImage} onChange={f => setField('coverImage', f)} hint="Shown at the top of the section's modal." />
+                <ImageUpload label="Cover Image (optional)" file={cs.coverImage} onActivate={() => setActiveModalId(target)} onChange={f => { setField('coverImage', f); setActiveModalId(target); }} hint="Shown at the top of the section's modal." />
               </>
             )}
           </div>
@@ -624,7 +659,7 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
             const newId = 'cs-' + Math.random().toString(36).slice(2, 8);
             update('customSections', [
               ...(data.customSections || []),
-              { id: newId, title: 'New Section', icon: 'info', linkType: 'modal', subtitle: '', label: 'Details', content: '', coverImage: null, externalUrl: '' }
+              { id: newId, title: 'New Section', icon: 'info', linkType: 'modal', subtitle: '', label: 'Details', content: '', coverImage: null, externalUrl: '', galleryImages: [], video: null }
             ]);
           }}
           className="mt-2 px-4 py-2 bg-brown-deep text-white text-xs uppercase tracking-wider rounded hover:bg-brown-dark transition-colors"

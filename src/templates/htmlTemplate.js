@@ -288,6 +288,19 @@ ${(d.customSections || []).map(cs => {
           <span>${esc(cs.title || 'Section')}<span class="guide-card-ext">↗</span></span>
         </a>`;
   }
+  if (cs.linkType === 'video') {
+    const vf = imageNames.videos && imageNames.videos[cs.id];
+    if (vf) {
+      return `        <button class="guide-card" data-video="videos/${vf}">
+          ${iconSvg}
+          <span>${esc(cs.title || 'Section')}</span>
+        </button>`;
+    }
+    return `        <button class="guide-card">
+          ${iconSvg}
+          <span>${esc(cs.title || 'Section')}</span>
+        </button>`;
+  }
   return `        <button class="guide-card" data-modal="modal-custom-${esc(cs.id)}">
           ${iconSvg}
           <span>${esc(cs.title || 'Section')}</span>
@@ -387,12 +400,25 @@ ${(d.customSections || []).map(cs => {
     <div class="modal-body">${modalCover('amen', imageNames.coverAmenities, 'Amenities', 'Everything provided for your comfort')}
       <div class="modal-content"><div class="container">
         <div class="amenity-grid">
-          <div class="amenity-category"><p class="card-label">Sleeping</p><ul>${li(d.amenitySleeping || [])}</ul></div>
-          <div class="amenity-category"><p class="card-label">Bathroom</p><ul>${li(d.amenityBathroom || [])}</ul></div>
-          <div class="amenity-category"><p class="card-label">Living Room</p><ul>${li(d.amenityLiving || [])}</ul></div>
-          <div class="amenity-category"><p class="card-label">Workspace</p><ul>${li(d.amenityWorkspace || [])}</ul></div>
-          <div class="amenity-category"><p class="card-label">Kitchen</p><ul>${li(d.amenityKitchen || [])}</ul></div>
-          <div class="amenity-category"><p class="card-label">Outdoor</p><ul>${li(d.amenityOutdoor || [])}</ul></div>
+${(() => {
+  const cat = (label, items, key) => {
+    const f = imageNames[key];
+    return `          <div class="amenity-category${f ? ' amenity-category--photo' : ''}">${f ? `<div class="amenity-photo" style="background-image: url('images/${f}')"></div>` : ''}<div class="amenity-body"><p class="card-label">${esc(label)}</p><ul>${li(items || [])}</ul></div></div>`;
+  };
+  return [
+    cat(d.amenitySleepingLabel || 'Sleeping', d.amenitySleeping, 'amenitySleepingImg'),
+    cat(d.amenityBathroomLabel || 'Bathroom', d.amenityBathroom, 'amenityBathroomImg'),
+    cat(d.amenityLivingLabel || 'Living Room', d.amenityLiving, 'amenityLivingImg'),
+    cat(d.amenityWorkspaceLabel || 'Workspace', d.amenityWorkspace, 'amenityWorkspaceImg'),
+    cat(d.amenityKitchenLabel || 'Kitchen', d.amenityKitchen, 'amenityKitchenImg'),
+    cat(d.amenityOutdoorLabel || 'Outdoor', d.amenityOutdoor, 'amenityOutdoorImg')
+  ].filter((_, idx) => {
+    // Hide a category entirely if it has no label AND no items
+    const labels = [d.amenitySleepingLabel, d.amenityBathroomLabel, d.amenityLivingLabel, d.amenityWorkspaceLabel, d.amenityKitchenLabel, d.amenityOutdoorLabel];
+    const lists = [d.amenitySleeping, d.amenityBathroom, d.amenityLiving, d.amenityWorkspace, d.amenityKitchen, d.amenityOutdoor];
+    return (labels[idx] && labels[idx].trim()) || (lists[idx] && lists[idx].length);
+  }).join('\n');
+})()}
         </div>
       </div></div>
     </div>
@@ -602,21 +628,45 @@ ${(d.reviews || []).map(r => `          <div class="review-card"><p class="revie
     </div>
   </div>
 
-${(d.customSections || []).filter(cs => cs.linkType !== 'external').map(cs => {
+${(d.customSections || []).filter(cs => cs.linkType !== 'external' && cs.linkType !== 'video').map(cs => {
   const coverImg = (imageNames.customCovers && imageNames.customCovers[cs.id]) || null;
+  let bodyHtml;
+  if (cs.linkType === 'gallery') {
+    const files = (imageNames.galleries && imageNames.galleries[cs.id]) || [];
+    bodyHtml = files.length
+      ? `<div class="gallery-grid">${files.map(f => `<a class="gallery-item" href="images/${f}" style="background-image: url('images/${f}')" aria-label="View image"></a>`).join('')}</div>`
+      : `<div class="card"><p class="card-label">${esc(cs.label || cs.title || 'Gallery')}</p><p style="color:var(--brown-mid); font-size:0.9rem;">No images yet.</p></div>`;
+  } else {
+    bodyHtml = `<div class="card">
+          <p class="card-label">${esc(cs.label || cs.title || 'Section')}</p>
+          ${renderParagraphs(cs.content || '')}
+        </div>`;
+  }
   return `
   <!-- MODAL: CUSTOM ${esc(cs.title || '')} -->
   <div class="modal" id="modal-custom-${esc(cs.id)}" role="dialog" aria-modal="true" aria-label="${esc(cs.title || '')}">${modalHeader(cs.title || 'Section')}
     <div class="modal-body">${modalCover(cs.id, coverImg, cs.title || '', cs.subtitle || '')}
       <div class="modal-content"><div class="container">
-        <div class="card">
-          <p class="card-label">${esc(cs.label || cs.title || 'Section')}</p>
-          ${renderParagraphs(cs.content || '')}
-        </div>
+        ${bodyHtml}
       </div></div>
     </div>
   </div>`;
 }).join('\n')}
+
+  <!-- LIGHTBOX (gallery carousel) -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" aria-label="Close">&times;</button>
+    <button class="lightbox-nav lightbox-prev" aria-label="Previous image">&#8249;</button>
+    <img class="lightbox-img" src="" alt="">
+    <button class="lightbox-nav lightbox-next" aria-label="Next image">&#8250;</button>
+    <div class="lightbox-counter"></div>
+  </div>
+
+  <!-- FLOATING VIDEO PLAYER (transparent backdrop) -->
+  <div class="video-lightbox" id="video-lightbox" aria-hidden="true">
+    <button class="video-close" aria-label="Close">&times;</button>
+    <video class="video-player" controls playsinline preload="metadata"></video>
+  </div>
 
   <script src="js/main.js"></script>
 </body>

@@ -60,7 +60,13 @@ export const defaultData = {
     coverReviews: null,
     coverContact: null,
     wifiQr: null,
-    hostPhoto: null
+    hostPhoto: null,
+    amenitySleepingImg: null,
+    amenityBathroomImg: null,
+    amenityLivingImg: null,
+    amenityWorkspaceImg: null,
+    amenityKitchenImg: null,
+    amenityOutdoorImg: null
   },
 
   // Welcome section
@@ -98,6 +104,14 @@ export const defaultData = {
     'Turn off all lights, fans & AC',
     'Close and lock all windows & doors'
   ],
+
+  // Amenities — category labels (editable)
+  amenitySleepingLabel: 'Sleeping',
+  amenityBathroomLabel: 'Bathroom',
+  amenityLivingLabel: 'Living Room',
+  amenityWorkspaceLabel: 'Workspace',
+  amenityKitchenLabel: 'Kitchen',
+  amenityOutdoorLabel: 'Outdoor',
 
   // Amenities
   amenitySleeping: [

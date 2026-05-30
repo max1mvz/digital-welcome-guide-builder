@@ -8,7 +8,7 @@ import { jsContent } from '../templates/jsTemplate.js';
 export function buildPreviewDocument(data, activeModalId = null) {
   // Map image keys -> blob URLs (kept on `previewUrls` so caller can revoke them)
   const previewUrls = {};
-  const imageNames = { customCovers: {}, nearbyImages: {} };
+  const imageNames = { customCovers: {}, nearbyImages: {}, galleries: {}, videos: {} };
 
   for (const [key, file] of Object.entries(data.images || {})) {
     if (file instanceof File || file instanceof Blob) {
@@ -39,6 +39,28 @@ export function buildPreviewDocument(data, activeModalId = null) {
     }
   }
 
+  // Custom section gallery images
+  for (const cs of data.customSections || []) {
+    if (cs.linkType === 'gallery' && Array.isArray(cs.galleryImages) && cs.galleryImages.length) {
+      imageNames.galleries[cs.id] = cs.galleryImages.map((file, idx) => {
+        const placeholderKey = `gallery_${cs.id}_${idx}`;
+        if (file instanceof File || file instanceof Blob) {
+          previewUrls[placeholderKey] = URL.createObjectURL(file);
+        }
+        return placeholderKey;
+      });
+    }
+  }
+
+  // Custom section videos
+  for (const cs of data.customSections || []) {
+    if (cs.linkType === 'video' && (cs.video instanceof File || cs.video instanceof Blob)) {
+      const placeholderKey = `video_${cs.id}`;
+      previewUrls[placeholderKey] = URL.createObjectURL(cs.video);
+      imageNames.videos[cs.id] = placeholderKey;
+    }
+  }
+
   let html = generateHTML(data, imageNames);
   const css = generateCSS(data);
 
@@ -48,7 +70,7 @@ export function buildPreviewDocument(data, activeModalId = null) {
   // Replace `images/<key>` everywhere with the blob URL.
   for (const [key, url] of Object.entries(previewUrls)) {
     const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`images/${escaped}(?![a-zA-Z0-9])`, 'g');
+    const regex = new RegExp(`(?:images|videos)/${escaped}(?![a-zA-Z0-9])`, 'g');
     html = html.replace(regex, url);
   }
 

@@ -22,7 +22,13 @@ const IMAGE_FILENAMES = {
   coverReviews: 'cover-reviews',
   coverContact: 'cover-host',
   wifiQr: 'wifi-qr',
-  hostPhoto: 'host-photo'
+  hostPhoto: 'host-photo',
+  amenitySleepingImg: 'amenity-sleeping',
+  amenityBathroomImg: 'amenity-bathroom',
+  amenityLivingImg: 'amenity-living',
+  amenityWorkspaceImg: 'amenity-workspace',
+  amenityKitchenImg: 'amenity-kitchen',
+  amenityOutdoorImg: 'amenity-outdoor'
 };
 
 function fileExtension(file) {
@@ -34,6 +40,10 @@ function fileExtension(file) {
   if (file.type === 'image/png') return '.png';
   if (file.type === 'image/jpeg') return '.jpg';
   if (file.type === 'image/webp') return '.webp';
+  if (file.type === 'video/mp4') return '.mp4';
+  if (file.type === 'video/webm') return '.webm';
+  if (file.type === 'video/quicktime') return '.mov';
+  if (file.type && file.type.startsWith('video/')) return '.mp4';
   return '.jpg';
 }
 
@@ -41,7 +51,7 @@ export async function generateGuideZip(data) {
   const zip = new JSZip();
 
   // Build map of imageKey -> actual filename ("logo.png", etc.)
-  const imageNames = { customCovers: {}, nearbyImages: {} };
+  const imageNames = { customCovers: {}, nearbyImages: {}, galleries: {}, videos: {} };
   for (const [key, baseName] of Object.entries(IMAGE_FILENAMES)) {
     const file = data.images?.[key];
     if (file) {
@@ -59,6 +69,18 @@ export async function generateGuideZip(data) {
   for (const n of data.nearby || []) {
     if (n.image) {
       imageNames.nearbyImages[n.id] = `nearby-${n.id}${fileExtension(n.image)}`;
+    }
+  }
+  // Custom section gallery images
+  for (const cs of data.customSections || []) {
+    if (cs.linkType === 'gallery' && Array.isArray(cs.galleryImages) && cs.galleryImages.length) {
+      imageNames.galleries[cs.id] = cs.galleryImages.map((file, idx) => `gallery-${cs.id}-${idx}${fileExtension(file)}`);
+    }
+  }
+  // Custom section videos
+  for (const cs of data.customSections || []) {
+    if (cs.linkType === 'video' && cs.video) {
+      imageNames.videos[cs.id] = `video-${cs.id}${fileExtension(cs.video)}`;
     }
   }
 
@@ -96,6 +118,29 @@ export async function generateGuideZip(data) {
       const filename = `nearby-${n.id}${fileExtension(n.image)}`;
       const buffer = await n.image.arrayBuffer();
       imagesFolder.file(filename, buffer);
+    }
+  }
+  // Custom section gallery images
+  for (const cs of data.customSections || []) {
+    if (cs.linkType === 'gallery' && Array.isArray(cs.galleryImages)) {
+      for (let idx = 0; idx < cs.galleryImages.length; idx++) {
+        const file = cs.galleryImages[idx];
+        if (!file) continue;
+        const filename = `gallery-${cs.id}-${idx}${fileExtension(file)}`;
+        const buffer = await file.arrayBuffer();
+        imagesFolder.file(filename, buffer);
+      }
+    }
+  }
+
+  // Custom section videos (in a dedicated videos/ folder, created only if needed)
+  let videosFolder = null;
+  for (const cs of data.customSections || []) {
+    if (cs.linkType === 'video' && cs.video) {
+      if (!videosFolder) videosFolder = zip.folder('videos');
+      const filename = `video-${cs.id}${fileExtension(cs.video)}`;
+      const buffer = await cs.video.arrayBuffer();
+      videosFolder.file(filename, buffer);
     }
   }
 
