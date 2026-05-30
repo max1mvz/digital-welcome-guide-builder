@@ -66,6 +66,14 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
     onEnabledChange: (val) => update(`enabledSections.${key}`, val)
   });
 
+  // Helper for image uploads that should drive the preview to a specific modal.
+  // On upload (or when the file dialog opens) the preview jumps to that section's
+  // modal so you see the cover update in real time. Pass null for hero/home images.
+  const imgPreview = (key, modalId = null) => ({
+    onActivate: () => setActiveModalId(modalId),
+    onChange: (f) => { updateImage(key, f); setActiveModalId(modalId); }
+  });
+
   return (
     <div className="p-5">
       <p className="text-xs uppercase tracking-[0.25em] text-brown-light mb-1">Customize Your Guide</p>
@@ -192,23 +200,24 @@ export default function FormPanel({ data, update, updateImage, activeModalId, se
       {/* === IMAGES === */}
       <SectionAccordion title="Images" number="3" {...previewProps(null)}>
         <p className="text-xs text-brown-mid mb-3">Upload photos for the hero, logo, and each section. Recommended size: 1200×800px.</p>
-        <ImageUpload label="Logo (PNG, transparent)" file={data.images.logo} onChange={f => updateImage('logo', f)} hint="Shown in hero card. Recommended: 400×200px PNG." />
-        <ImageUpload label="Hero Background" file={data.images.hero} onChange={f => updateImage('hero', f)} hint="Full-screen background photo on landing." />
+        <ImageUpload label="Logo (PNG, transparent)" file={data.images.logo} {...imgPreview('logo', null)} hint="Shown in hero card. Recommended: 400×200px PNG." />
+        <ImageUpload label="Hero Background" file={data.images.hero} {...imgPreview('hero', null)} hint="Full-screen background photo on landing." />
         <div className="my-3 pt-3 border-t border-border/40">
           <p className="text-xs uppercase tracking-wider text-brown-mid mb-2">Section Covers</p>
+          <p className="text-[10px] text-brown-light mb-2">Uploading a cover opens that section in the preview so you see it live.</p>
         </div>
-        <ImageUpload label="Welcome Cover" file={data.images.coverWelcome} onChange={f => updateImage('coverWelcome', f)} />
-        <ImageUpload label="Accommodations Cover" file={data.images.coverAccommodations} onChange={f => updateImage('coverAccommodations', f)} />
-        <ImageUpload label="Check-in/Out Cover" file={data.images.coverCheckin} onChange={f => updateImage('coverCheckin', f)} />
-        <ImageUpload label="Amenities Cover" file={data.images.coverAmenities} onChange={f => updateImage('coverAmenities', f)} />
-        <ImageUpload label="WiFi Cover" file={data.images.coverWifi} onChange={f => updateImage('coverWifi', f)} />
-        <ImageUpload label="House Rules Cover" file={data.images.coverRules} onChange={f => updateImage('coverRules', f)} />
-        <ImageUpload label="Kitchen Cover" file={data.images.coverKitchen} onChange={f => updateImage('coverKitchen', f)} />
-        <ImageUpload label="Nearby Cover" file={data.images.coverNearby} onChange={f => updateImage('coverNearby', f)} />
-        <ImageUpload label="Emergency Cover" file={data.images.coverEmergency} onChange={f => updateImage('coverEmergency', f)} />
-        <ImageUpload label="Pet Policy Cover" file={data.images.coverPets} onChange={f => updateImage('coverPets', f)} />
-        <ImageUpload label="Reviews Cover" file={data.images.coverReviews} onChange={f => updateImage('coverReviews', f)} />
-        <ImageUpload label="Contact Cover" file={data.images.coverContact} onChange={f => updateImage('coverContact', f)} />
+        <ImageUpload label="Welcome Cover" file={data.images.coverWelcome} {...imgPreview('coverWelcome', 'modal-welcome')} />
+        <ImageUpload label="Accommodations Cover" file={data.images.coverAccommodations} {...imgPreview('coverAccommodations', 'modal-accommodations')} />
+        <ImageUpload label="Check-in/Out Cover" file={data.images.coverCheckin} {...imgPreview('coverCheckin', 'modal-checkin')} />
+        <ImageUpload label="Amenities Cover" file={data.images.coverAmenities} {...imgPreview('coverAmenities', 'modal-amenities')} />
+        <ImageUpload label="WiFi Cover" file={data.images.coverWifi} {...imgPreview('coverWifi', 'modal-wifi')} />
+        <ImageUpload label="House Rules Cover" file={data.images.coverRules} {...imgPreview('coverRules', 'modal-rules')} />
+        <ImageUpload label="Kitchen Cover" file={data.images.coverKitchen} {...imgPreview('coverKitchen', 'modal-kitchen')} />
+        <ImageUpload label="Nearby Cover" file={data.images.coverNearby} {...imgPreview('coverNearby', 'modal-nearby')} />
+        <ImageUpload label="Emergency Cover" file={data.images.coverEmergency} {...imgPreview('coverEmergency', 'modal-emergency')} />
+        <ImageUpload label="Pet Policy Cover" file={data.images.coverPets} {...imgPreview('coverPets', 'modal-pets')} />
+        <ImageUpload label="Reviews Cover" file={data.images.coverReviews} {...imgPreview('coverReviews', 'modal-reviews')} />
+        <ImageUpload label="Contact Cover" file={data.images.coverContact} {...imgPreview('coverContact', 'modal-contact')} />
       </SectionAccordion>
 
       {/* === WELCOME MESSAGE === */}

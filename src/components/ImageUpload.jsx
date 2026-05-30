@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-export default function ImageUpload({ label, file, onChange, hint }) {
+export default function ImageUpload({ label, file, onChange, hint, onActivate }) {
   const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {
@@ -42,7 +42,10 @@ export default function ImageUpload({ label, file, onChange, hint }) {
           </div>
         )}
         <div className="flex-1">
-          <label className="inline-block px-3 py-1.5 text-xs uppercase tracking-wider bg-brown-deep text-white rounded cursor-pointer hover:bg-brown-dark transition-colors">
+          <label
+            onClick={() => { if (onActivate) onActivate(); }}
+            className="inline-block px-3 py-1.5 text-xs uppercase tracking-wider bg-brown-deep text-white rounded cursor-pointer hover:bg-brown-dark transition-colors"
+          >
             {file ? 'Replace' : 'Upload'}
             <input type="file" accept="image/*" onChange={handleChange} className="hidden" />
           </label>
